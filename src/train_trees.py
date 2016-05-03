@@ -43,9 +43,9 @@ print(y.shape)
 
 x_fit, x_eval, y_fit, y_eval = cross_validation.train_test_split(xTrain, y, test_size=0.2)
 
-clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=500, learning_rate=0.02, nthread=4, subsample=0.6, seed=2471)
+clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=200, learning_rate=0.05, max_depth=20, nthread=4, subsample=0.7, colsample_bytree=0.85, seed=2471)
 
-clf.fit(x_fit, y_fit, early_stopping_rounds=50, eval_metric='mlogloss', eval_set=[(x_eval, y_eval)])
+clf.fit(x_fit, y_fit, early_stopping_rounds=20, eval_metric='mlogloss', eval_set=[(x_eval, y_eval)])
 
 clf.fit(xTrain, y)
 predictY = clf.predict_proba(xTrain)
