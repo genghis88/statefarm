@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import normalize
 from sklearn import metrics
 from sklearn import cross_validation
+import gc
 
 trainFile = sys.argv[1]
 pickleFile = sys.argv[2]
@@ -25,6 +26,7 @@ testDir = 'data/test_normalized'
 imageSize = 1200
 imageShape = (40, 30)
 batchSize = 256
+gcEnabled = False
 if source == '1':
   trainingDir = 'data/train_normalized'
   testDir = 'data/test_normalized'
@@ -42,7 +44,14 @@ elif source == '3':
   testDir = 'data/test_normalized_square_big'
   imageSize = 14400
   imageShape = (120, 120)
-  batchSize = 64
+  batchSize = 8
+  gcEnabled = True
+elif source == '4':
+  trainingDir = 'data/train_normalized_80_60'
+  testDir = 'data/test_normalized_80_60'
+  imageSize = 4800
+  imageShape = (80, 60)
+  batchSize = 128
 
 trainingLabels = pd.read_csv(trainFile)
 print(trainingLabels.shape)
@@ -287,6 +296,54 @@ def getNet6():
   net.add(Dense(10, activation='softmax'))
   return net
 
+def getNet9():
+  net = Sequential()
+  net.add(ZeroPadding2D((1,1), input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3])))
+  net.add(Convolution2D(32, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(32, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Convolution2D(32, 5, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #38x29
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Convolution2D(64, 5, 4, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #17x13
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Convolution2D(128, 4, 4, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #7x5
+
+  net.add(Convolution2D(256, 4, 4, init='glorot_uniform'))
+  net.add(Activation('relu'))
+
+  net.add(Flatten())
+
+  net.add(Dense(1024, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(512, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(256, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dense(10, activation='softmax'))
+  return net
+
 def copy_selected_drivers(train_data, train_target, driver_id, driver_list):
   data = []
   target = []
@@ -304,8 +361,10 @@ def copy_selected_drivers(train_data, train_target, driver_id, driver_list):
 def merge_several_folds_mean(data, nfolds):
   a = np.array(data[0])
   for i in range(1, nfolds):
-      a += np.array(data[i])
-  a /= nfolds
+    #a += np.array(data[i])
+    a *= np.array(data[i])
+  #a /= nfolds
+  a = np.power(a, (1. / nfolds))
   return a.tolist()
 
 def dict_to_list(d):
@@ -332,20 +391,28 @@ def run_cross_validation(nfolds=10):
     unique_list_valid = [unique_drivers[i] for i in test_drivers]
     #print('Unique drivers validation ' + str(unique_list_valid))
     X_valid, Y_valid, test_index = copy_selected_drivers(xTrain, y, driver_id, unique_list_valid)
+
+    net = None
     if source == '1':
       net = getNet1()
       #net = getNet2()
-      numberEpochs = 5
+      #net = getNet8()
+      numberEpochs = 30
     elif source == '2':
       net = getNet3()
       numberEpochs = 30
     elif source == '3':
-      #net = getNet4()
+      net = getNet4()
       #net = getNet5()
-      net = getNet6()
-      numberEpochs = 5
+      #net = getNet6()
+      #net = getNet7()
+      numberEpochs = 10
+    elif source == '4':
+      net = getNet9()
+      #net = getNet10()
+      numberEpochs = 15
 
-    optimizer = SGD(lr=0.01, momentum=0.9, decay=0.0002, nesterov=True)
+    optimizer = SGD(lr=0.001, momentum=0.9, decay=0.0001, nesterov=True)
     #optimizer = SGD(lr=0.01, momentum=0.9, nesterov=True)
     #optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-10)
 
@@ -363,8 +430,11 @@ def run_cross_validation(nfolds=10):
     for i in range(len(test_index)):
       yfull_train[test_index[i]] = predictValidY[i]
 
-    test_prediction = net.predict_proba(xTest, batch_size=batchSize, verbose=1)
+    test_prediction = net.predict_proba(xTest)
     yfull_test.append(test_prediction)
+
+    if gcEnabled:
+      gc.collect()
 
     num_fold += 1
 
