@@ -60,7 +60,7 @@ for index, row in trainingLabels.iterrows():
   im.close()
 
 xTrain /= 255
-xTrain = xTrain.reshape(xTrain.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
+#xTrain = xTrain.reshape(xTrain.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
 print(xTrain.shape)
 
 #xTrain /= xTrain.std(axis = None)
@@ -85,7 +85,7 @@ for fName in files:
   index += 1
 
 xTest /= 255
-xTest = xTest.reshape(xTest.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
+#xTest = xTest.reshape(xTest.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
 
 def copy_selected_drivers(train_data, train_target, driver_id, driver_list):
   data = []
