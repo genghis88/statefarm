@@ -6,6 +6,7 @@ import pickle
 import sys
 import numpy as np
 import xgboost as xgb
+from keras.utils.np_utils import to_categorical
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import normalize
 from sklearn import metrics
@@ -61,6 +62,7 @@ for index, row in trainingLabels.iterrows():
 
 xTrain /= 255
 #xTrain = xTrain.reshape(xTrain.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
+
 print(xTrain.shape)
 
 #xTrain /= xTrain.std(axis = None)
@@ -152,7 +154,7 @@ def run_cross_validation(nfolds=10):
     clf.fit(X_train, Y_train, early_stopping_rounds=20, eval_metric='mlogloss', eval_set=[(X_valid, Y_valid)])
 
     predictValidY = clf.predict_proba(X_valid)
-    score = metrics.log_loss(Y_valid, predictValidY)
+    score = metrics.log_loss(to_categorical(Y_valid, 10), predictValidY)
     print('Fold ' + str(num_fold) + ' score ' + str(score))
 
     for i in range(len(test_index)):
@@ -166,7 +168,7 @@ def run_cross_validation(nfolds=10):
 
     num_fold += 1
 
-  score = metrics.log_loss(y, dict_to_list(yfull_train))
+  score = metrics.log_loss(to_categorical(y, 10), dict_to_list(yfull_train))
   print('Final log loss ' + str(score))
   test_res = merge_several_folds_mean(yfull_test, nfolds)
   predictions = pd.DataFrame(test_res, index=files)
@@ -175,57 +177,3 @@ def run_cross_validation(nfolds=10):
   predictions.to_csv(predictionsFile)
 
 run_cross_validation(10)
-
-'''if source == '1':
-  #net = getNet1()
-  net = getNet2()
-  numberEpochs = 10
-elif source == '2':
-  net = getNet3()
-  numberEpochs = 30
-elif source == '3':
-  #net = getNet4()
-  #net = getNet5()
-  net = getNet6()
-  numberEpochs = 5
-
-optimizer = SGD(lr=0.01, momentum=0.9, decay=0.0002, nesterov=True)
-#optimizer = SGD(lr=0.01, momentum=0.9, nesterov=True)
-#optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-10)
-
-net.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-
-x_fit, x_eval, y_fit, y_eval= cross_validation.train_test_split(xTrain, y, test_size=0.2)
-
-net.fit(x_fit, y_fit,
-        nb_epoch=numberEpochs,
-        batch_size=batchSize,
-        verbose=1,
-        validation_data=(x_eval, y_eval))
-
-predictY = net.predict_proba(xTrain)
-print(metrics.log_loss(originalY, predictY))
-
-files = [ f for f in listdir(testDir) if path.isfile(path.join(testDir,f)) ]
-xTest = np.zeros((len(files), imageSize), dtype='float32')
-index = 0
-for fName in files:
-  fileName = path.join(testDir,fName)
-  im = Image.open(fileName)
-  xTest[index, :] = np.reshape(im, imageSize)
-  im.close()
-  index += 1
-
-xTest /= 255
-xTest = xTest.reshape(xTest.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
-
-predictY = net.predict_proba(xTest)
-
-predictions = pd.DataFrame(predictY, index=files)
-predictions.index.name = 'img'
-predictions.columns = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
-predictions.to_csv(predictionsFile)'''
-
-#with open(pickleFile,'wb') as f:
-#  sys.setrecursionlimit(20000)
-#  pickle.dump(net, f)
