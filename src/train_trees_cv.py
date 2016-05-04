@@ -62,7 +62,7 @@ for index, row in trainingLabels.iterrows():
   im.close()
 
 def getConvolvedImage(allImagesArray):
-  newImagesArray = np.zeros(shape=(allImagesArray.shape[0], (imageShape[0] - 6) * (imageShape[1] - 6)))
+  newImagesArray = np.zeros(shape=(allImagesArray.shape[0], (imageShape[0] - 8) * (imageShape[1] - 8)))
   for imageIndex in range(len(allImagesArray)):
     image = allImagesArray[imageIndex]
     image = image.reshape(imageShape[0], imageShape[1]).astype('float32')
@@ -70,7 +70,8 @@ def getConvolvedImage(allImagesArray):
     image = signal.convolve2d(image, filter, mode='valid')
     image = signal.convolve2d(image, filter, mode='valid')
     image = signal.convolve2d(image, filter, mode='valid')
-    image = image.reshape((imageShape[0] - 6) * (imageShape[1] - 6),).astype('float32')
+    image = signal.convolve2d(image, filter, mode='valid')
+    image = image.reshape((imageShape[0] - 8) * (imageShape[1] - 8),).astype('float32')
     newImagesArray[imageIndex] = image
   return allImagesArray
 
@@ -167,7 +168,7 @@ def run_cross_validation(nfolds=10):
 
     clf = None
     if source == '1':
-      clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=200, learning_rate=0.05, max_depth=25, nthread=4, subsample=0.6, colsample_bytree=0.75, seed=1234)
+      clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=200, learning_rate=0.05, max_depth=5, nthread=4, subsample=0.7, colsample_bytree=0.85, seed=1234)
       numberEpochs = 30
     elif source == '2':
       clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=200, learning_rate=0.05, max_depth=20, nthread=4, subsample=0.7, colsample_bytree=0.85, seed=2471)
