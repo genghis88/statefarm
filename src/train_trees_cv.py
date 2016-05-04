@@ -12,6 +12,7 @@ from sklearn.preprocessing import normalize
 from sklearn import metrics
 from sklearn import cross_validation
 import gc
+from scipy import signal
 
 trainFile = sys.argv[1]
 pickleFile = sys.argv[2]
@@ -60,9 +61,33 @@ for index, row in trainingLabels.iterrows():
   xTrain[index, :] = np.reshape(im, imageSize)
   im.close()
 
-xTrain /= 255
-#xTrain = xTrain.reshape(xTrain.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
+def getConvolvedImage(allImagesArray):
+  newImagesArray = np.zeros(shape=(allImagesArray.shape[0], (imageShape[0] - 6) * (imageShape[1] - 6)))
+  for imageIndex in range(len(allImagesArray)):
+    image = allImagesArray[imageIndex]
+    image = image.reshape(imageShape[0], imageShape[1]).astype('float32')
+    filter = np.array([[1./9, 1./9, 1./9], [1./9, 1./9, 1./9], [1./9, 1./9, 1./9]])
+    image = signal.convolve2d(image, filter, mode='valid')
+    image = signal.convolve2d(image, filter, mode='valid')
+    image = signal.convolve2d(image, filter, mode='valid')
+    image = image.reshape((imageShape[0] - 6) * (imageShape[1] - 6),).astype('float32')
+    newImagesArray[imageIndex] = image
+  return allImagesArray
 
+
+xTrain /= 255
+xTrain = getConvolvedImage(xTrain)
+#xTrain = xTrain.reshape(xTrain.shape[0], imageShape[0], imageShape[1]).astype('float32')
+#xTrainC = theano.shared(xTrain, name='xTrainC')
+#w_bound = 9
+#W = theano.shared(np.asarray(np.random.uniform(low=-1.0 / w_bound, high=1.0 / w_bound, size=(3,3))), name='W')
+#xTrainC = theano.tensor.signal.conv.conv2d(xTrain, W)
+#xTrainC = theano.tensor.signal.pool.pool_2d(xTrainC, (2,2), ignore_border=False, mode='max')
+#xTrainC = theano.tensor.signal.conv.conv2d(xTrainC, W)
+#xTrainC = theano.tensor.signal.pool.pool_2d(xTrainC, (2,2), ignore_border=False, mode='max')
+#xTrainC = theano.tensor.signal.conv.conv2d(xTrainC, W)
+#xTrainC = theano.tensor.signal.pool.pool_2d(xTrainC, (2,2), ignore_border=False, mode='max')
+#xTrain = theano.tensor.reshape(xTrainC, (xTrain.shape[0], 8))
 print(xTrain.shape)
 
 #xTrain /= xTrain.std(axis = None)
@@ -88,6 +113,7 @@ for fName in files:
 
 xTest /= 255
 #xTest = xTest.reshape(xTest.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
+xTest = getConvolvedImage(xTest)
 
 def copy_selected_drivers(train_data, train_target, driver_id, driver_list):
   data = []
@@ -133,13 +159,15 @@ def run_cross_validation(nfolds=10):
     unique_list_train = [unique_drivers[i] for i in train_drivers]
     #print('Unique drivers train ' + str(unique_list_train))
     X_train, Y_train, train_index = copy_selected_drivers(xTrain, y, driver_id, unique_list_train)
+    #X_train, Y_train, train_index = copy_selected_drivers(xTrainC, y, driver_id, unique_list_train)
     unique_list_valid = [unique_drivers[i] for i in test_drivers]
     #print('Unique drivers validation ' + str(unique_list_valid))
     X_valid, Y_valid, test_index = copy_selected_drivers(xTrain, y, driver_id, unique_list_valid)
+    #X_valid, Y_valid, test_index = copy_selected_drivers(xTrainC, y, driver_id, unique_list_valid)
 
     clf = None
     if source == '1':
-      clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=200, learning_rate=0.05, max_depth=20, nthread=4, subsample=0.7, colsample_bytree=0.85, seed=2471)
+      clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=200, learning_rate=0.05, max_depth=25, nthread=4, subsample=0.6, colsample_bytree=0.75, seed=1234)
       numberEpochs = 30
     elif source == '2':
       clf = xgb.XGBClassifier(objective='multi:softmax', n_estimators=200, learning_rate=0.05, max_depth=20, nthread=4, subsample=0.7, colsample_bytree=0.85, seed=2471)
@@ -154,8 +182,8 @@ def run_cross_validation(nfolds=10):
     clf.fit(X_train, Y_train, early_stopping_rounds=20, eval_metric='mlogloss', eval_set=[(X_valid, Y_valid)])
 
     predictValidY = clf.predict_proba(X_valid)
-    score = metrics.log_loss(to_categorical(Y_valid, 10), predictValidY)
-    print('Fold ' + str(num_fold) + ' score ' + str(score))
+    #score = metrics.log_loss(to_categorical(Y_valid, 10), predictValidY)
+    print('Fold ' + str(num_fold) + ' done')
 
     for i in range(len(test_index)):
       yfull_train[test_index[i]] = predictValidY[i]
