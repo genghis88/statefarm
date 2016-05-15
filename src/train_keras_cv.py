@@ -52,6 +52,12 @@ elif source == '4':
   imageSize = 4800
   imageShape = (80, 60)
   batchSize = 128
+elif source == '5':
+  trainingDir = 'data/train_normalized_224_224'
+  testDir = 'data/test_normalized_224_224'
+  imageSize = 50176
+  imageShape = (224, 224)
+  batchSize = 2
 
 trainingLabels = pd.read_csv(trainFile)
 print(trainingLabels.shape)
@@ -193,61 +199,68 @@ def getNet3():
   return net
 
 def getNet4():
+  #learningRate = 0.0001
+  #momentum = 0.9
+  #decay = 0.00001
+  #numberEpochs = 10
   net = Sequential()
-  net.add(Convolution2D(32, 5, 5, input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3]), init='glorot_uniform')) # 116x116
+  net.add(Convolution2D(32, 7, 7, input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3]), init='glorot_uniform')) # 114x114
   net.add(ELU())
   net.add(MaxPooling2D(pool_size=(2,2)))
-  net.add(Dropout(0.5))
-  net.add(Convolution2D(64, 5, 5, init='glorot_uniform')) # 54x54
+  net.add(Convolution2D(64, 6, 6, init='glorot_uniform')) # 52x52
   net.add(Activation('tanh'))
   net.add(MaxPooling2D(pool_size=(2,2)))
-  net.add(Dropout(0.5))
-  net.add(Convolution2D(128, 4, 4, init='glorot_uniform')) # 24x24
+  net.add(Convolution2D(128, 5, 5, init='glorot_uniform')) # 22x22
   net.add(Activation('tanh'))
   net.add(MaxPooling2D(pool_size=(2,2)))
-  net.add(Dropout(0.5))
-  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) # 10x10
+  net.add(Convolution2D(256, 4, 4, init='glorot_uniform')) # 8x8
   net.add(Activation('tanh'))
   net.add(MaxPooling2D(pool_size=(2,2)))
-  net.add(Dropout(0.5))
-  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) # 2x2
-  net.add(Activation('tanh'))
+  #net.add(Convolution2D(512, 3, 3, init='glorot_uniform')) # 2x2
+  #net.add(Activation('tanh'))
   net.add(Flatten())
   net.add(Dense(2048, init='glorot_uniform'))
   net.add(ELU())
+  net.add(Dropout(0.5))
   net.add(Dense(1024, init='glorot_uniform'))
   net.add(Activation('tanh'))
+  net.add(Dropout(0.5))
   net.add(Dense(512, init='glorot_uniform'))
   net.add(Activation('tanh'))
-  net.add(Dense(256, init='glorot_uniform'))
-  net.add(Activation('tanh'))
+  #net.add(Dropout(0.5))
+  #net.add(Dense(256, init='glorot_uniform'))
+  #net.add(Activation('tanh'))
   net.add(Dense(10, activation='softmax'))
   return net
 
 def getNet5():
   net = Sequential()
-  net.add(Convolution2D(32, 4, 4, input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3]), init='glorot_uniform')) # 117x117
+  net.add(Convolution2D(32, 7, 7, input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3]), init='glorot_uniform')) # 114x114
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(3,3))) # 39x39
-  net.add(Convolution2D(64, 4, 4, init='glorot_uniform')) # 36x36
+  net.add(MaxPooling2D(pool_size=(2,2)))
+  net.add(Convolution2D(64, 6, 6, init='glorot_uniform')) # 52x52
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(3,3))) # 12x12
-  net.add(Convolution2D(128, 5, 5, init='glorot_uniform')) # 8x8
+  net.add(MaxPooling2D(pool_size=(2,2)))
+  net.add(Convolution2D(128, 5, 5, init='glorot_uniform')) # 22x22
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(2,2))) # 4x4
-  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) # 2x2
+  net.add(MaxPooling2D(pool_size=(2,2)))
+  net.add(Convolution2D(256, 4, 4, init='glorot_uniform')) # 8x8
   net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2)))
+  #net.add(Convolution2D(512, 3, 3, init='glorot_uniform')) # 2x2
+  #net.add(Activation('tanh'))
   net.add(Flatten())
-  #net.add(Dense(2048, init='glorot_uniform'))
-  #net.add(ELU())
+  net.add(Dense(2048, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
   net.add(Dense(1024, init='glorot_uniform'))
   net.add(Activation('relu'))
   net.add(Dropout(0.5))
   net.add(Dense(512, init='glorot_uniform'))
   net.add(Activation('relu'))
-  net.add(Dropout(0.5))
-  net.add(Dense(256, init='glorot_uniform'))
-  net.add(Activation('relu'))
+  #net.add(Dropout(0.5))
+  #net.add(Dense(256, init='glorot_uniform'))
+  #net.add(Activation('relu'))
   net.add(Dense(10, activation='softmax'))
   return net
 
@@ -259,41 +272,175 @@ def getNet6():
   net.add(ZeroPadding2D((1,1))) #122x122
   net.add(Convolution2D(32, 3, 3, init='glorot_uniform')) #120x120
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(2,2))) #60x60
+  net.add(Convolution2D(32, 7, 7, init='glorot_uniform')) #114x114
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #57x57
 
-  net.add(ZeroPadding2D((1,1))) #62x62
-  net.add(Convolution2D(64, 3, 3, init='glorot_uniform')) #60x60
+  net.add(ZeroPadding2D((1,1))) #59x59
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform')) #57x57
   net.add(Activation('relu'))
-  net.add(ZeroPadding2D((1,1))) #62x62
-  net.add(Convolution2D(64, 3, 3, init='glorot_uniform')) #60x60
+  net.add(ZeroPadding2D((1,1))) #59x59
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform')) #57x57
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(2,2))) #30x30
+  net.add(Convolution2D(64, 6, 6, init='glorot_uniform')) #52x52
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #26x26
 
-  net.add(ZeroPadding2D((1,1))) #32x32
-  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #30x30
+  net.add(ZeroPadding2D((1,1))) #28x28
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #26x26
   net.add(Activation('relu'))
-  net.add(ZeroPadding2D((1,1))) #32x32
-  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #30x30
+  net.add(ZeroPadding2D((1,1))) #28x28
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #26x26
   net.add(Activation('relu'))
-  net.add(ZeroPadding2D((1,1))) #32x32
-  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #30x30
+  net.add(Convolution2D(128, 5, 5, init='glorot_uniform')) #22x22
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(3,3))) #15x15
+  net.add(MaxPooling2D(pool_size=(2,2))) #11x11
 
-  net.add(Convolution2D(256, 4, 4, init='glorot_uniform'))
+  net.add(ZeroPadding2D((1,1))) #13x13
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) #11x11
   net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1))) #13x13
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) #11x11
+  net.add(Activation('relu'))
+  net.add(Convolution2D(256, 4, 4, init='glorot_uniform')) #8x8
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #4x4
+
+  #net.add(Convolution2D(512, 3, 3, init='glorot_uniform')) #2x2
+  #net.add(Activation('relu'))
 
   net.add(Flatten())
 
+  net.add(Dense(2048, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
   net.add(Dense(1024, init='glorot_uniform'))
   net.add(Activation('relu'))
   net.add(Dropout(0.5))
   net.add(Dense(512, init='glorot_uniform'))
   net.add(Activation('relu'))
+  net.add(Dense(10, activation='softmax'))
+  return net
+
+def getNet7():
+  net = Sequential()
+  net.add(ZeroPadding2D((1,1), input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3]))) #122x122
+  net.add(Convolution2D(32, 3, 3, init='glorot_uniform')) #120x120
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1))) #122x122
+  net.add(Convolution2D(32, 3, 3, init='glorot_uniform')) #120x120
+  net.add(Activation('relu'))
+  net.add(Convolution2D(32, 7, 7, init='glorot_uniform')) #114x114
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(3,3))) #38x38
+
+  net.add(ZeroPadding2D((1,1))) #40x40
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform')) #38x38
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1))) #40x40
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform')) #38x38
+  net.add(Activation('relu'))
+  net.add(Convolution2D(64, 5, 5, init='glorot_uniform')) #34x34
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #17x17
+
+  net.add(ZeroPadding2D((1,1))) #19x19
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #17x17
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1))) #19x19
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #17x17
+  net.add(Activation('relu'))
+  net.add(Convolution2D(128, 4, 4, init='glorot_uniform')) #14x14
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #7x7
+
+  net.add(ZeroPadding2D((1,1))) #9x9
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) #7x7
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1))) #9x9
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) #7x7
+  net.add(Activation('relu'))
+  net.add(Convolution2D(256, 4, 4, init='glorot_uniform')) #4z4
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #2x2
+
+  net.add(Flatten())
+
+  net.add(Dense(2048, init='glorot_uniform'))
+  net.add(Activation('relu'))
   net.add(Dropout(0.5))
-  net.add(Dense(256, init='glorot_uniform'))
+  net.add(Dense(1024, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(512, init='glorot_uniform'))
   net.add(Activation('relu'))
   net.add(Dense(10, activation='softmax'))
+  return net
+
+def getNet8():
+  net = Sequential()
+  net.add(ZeroPadding2D((1,1), input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3]))) #122x122
+  net.add(Convolution2D(32, 3, 3, init='glorot_uniform')) #120x120
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1))) #122x122
+  net.add(Convolution2D(32, 3, 3, init='glorot_uniform')) #120x120
+  net.add(Activation('relu'))
+  net.add(Convolution2D(32, 7, 7, init='glorot_uniform')) #114x114
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #57x57
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform')) #57x57
+  net.add(Activation('relu'))
+  net.add(Convolution2D(64, 6, 6, init='glorot_uniform')) #52x52
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #26x26
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #26x26
+  net.add(Activation('relu'))
+  net.add(Convolution2D(128, 6, 6, init='glorot_uniform')) #21x21
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(3,3))) #7x7
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(384, 3, 3, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(384, 3, 3, init='glorot_uniform')) #7x7
+  net.add(Activation('relu'))
+  net.add(Convolution2D(384, 5, 5, init='glorot_uniform')) #3x3
+  net.add(Activation('relu'))
+  net.add(MaxPooling2D(pool_size=(3,3))) #1x1
+
+  net.add(Flatten())
+
+  '''net.add(Dense(2048, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(1024, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(512, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dense(10, activation='softmax'))'''
+
+  net.add(Dense(1152, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(576, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(288, init='glorot_uniform'))
+  net.add(Activation('relu'))
+  net.add(Dense(10, activation='softmax'))
+
   return net
 
 def getNet9():
@@ -344,6 +491,60 @@ def getNet9():
   net.add(Dense(10, activation='softmax'))
   return net
 
+def getNet11():
+  net = Sequential()
+
+  net.add(ZeroPadding2D((1,1), input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3])))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #112x112
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #56x56
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #28x28
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #14x14
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #7x7
+
+  net.add(Flatten())
+
+  net.add(Dense(4096, init='glorot_uniform', activation='relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(4096, init='glorot_uniform', activation='relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(1000, activation='softmax'))
+
+  #net.load_weights('data/vgg16_weights.h5')
+
+  #net.layers.pop()
+  net.add(Dense(10, activation='softmax'))
+
+  return net
+
 def copy_selected_drivers(train_data, train_target, driver_id, driver_list):
   data = []
   target = []
@@ -360,12 +561,13 @@ def copy_selected_drivers(train_data, train_target, driver_id, driver_list):
 
 def merge_several_folds_mean(data, nfolds):
   a = np.array(data[0])
+  b = np.array(data[0])
   for i in range(1, nfolds):
-    #a += np.array(data[i])
-    a *= np.array(data[i])
-  #a /= nfolds
-  a = np.power(a, (1. / nfolds))
-  return a.tolist()
+    a += np.array(data[i])
+    b *= np.array(data[i])
+  a /= nfolds
+  b = np.power(b, (1. / nfolds))
+  return a.tolist(), b.tolist()
 
 def dict_to_list(d):
   ret = []
@@ -396,23 +598,27 @@ def run_cross_validation(nfolds=10):
     if source == '1':
       net = getNet1()
       #net = getNet2()
-      #net = getNet8()
       numberEpochs = 30
     elif source == '2':
       net = getNet3()
       numberEpochs = 30
     elif source == '3':
-      net = getNet4()
+      #net = getNet4()
       #net = getNet5()
       #net = getNet6()
       #net = getNet7()
-      numberEpochs = 10
+      net = getNet8()
+      numberEpochs = 5
     elif source == '4':
       net = getNet9()
       #net = getNet10()
       numberEpochs = 15
+    elif source == '5':
+      net = getNet11()
+      numberEpochs = 5
 
-    optimizer = SGD(lr=0.001, momentum=0.9, decay=0.0001, nesterov=True)
+    #optimizer = SGD(lr=0.0001, momentum=0.95, decay=0.00001, nesterov=True)
+    optimizer = SGD(lr=0.001, momentum=0.9, decay=0.00005, nesterov=True)
     #optimizer = SGD(lr=0.01, momentum=0.9, nesterov=True)
     #optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-10)
 
@@ -440,11 +646,15 @@ def run_cross_validation(nfolds=10):
 
   score = metrics.log_loss(y, dict_to_list(yfull_train))
   print('Final log loss ' + str(score))
-  test_res = merge_several_folds_mean(yfull_test, nfolds)
-  predictions = pd.DataFrame(test_res, index=files)
+  test_res_am, test_res_gm = merge_several_folds_mean(yfull_test, nfolds)
+  predictions = pd.DataFrame(test_res_am, index=files)
   predictions.index.name = 'img'
   predictions.columns = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
-  predictions.to_csv(predictionsFile)
+  predictions.to_csv(predictionsFile + '_am')
+  predictions = pd.DataFrame(test_res_gm, index=files)
+  predictions.index.name = 'img'
+  predictions.columns = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']
+  predictions.to_csv(predictionsFile + '_gm')
 
 run_cross_validation(10)
 

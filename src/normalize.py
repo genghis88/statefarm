@@ -17,7 +17,7 @@ testDir = 'data/test'
 trainingLabels = pd.read_csv(trainFile)
 print(trainingLabels.shape)
 
-imageSize = (80, 60)
+imageSize = (224, 224)
 batchSize = 100
 for index, row in trainingLabels.iterrows():
   fileName = path.join(trainingDir, row['classname'], row['img'])
