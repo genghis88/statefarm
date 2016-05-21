@@ -24,7 +24,7 @@ for index, row in trainingLabels.iterrows():
   newFileName = path.join(trainingOutputDir, row['classname'] + row['img'])
   im = Image.open(fileName)
   im = im.resize(imageSize, Image.ANTIALIAS)
-  im = im.convert('L')
+  #im = im.convert('L')
   im.save(newFileName)
   #im.show()
   #break
@@ -39,7 +39,7 @@ for fName in files:
   newFileName = path.join(testingOutputDir, fName)
   im = Image.open(fileName)
   im = im.resize(imageSize, Image.ANTIALIAS)
-  im = im.convert('L')
+  #im = im.convert('L')
   im.save(newFileName)
   #break
   #im = cv2.imread(fileName, 0)

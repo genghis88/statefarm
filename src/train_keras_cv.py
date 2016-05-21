@@ -24,40 +24,46 @@ source = sys.argv[4]
 trainingDir = 'data/train_normalized'
 testDir = 'data/test_normalized'
 imageSize = 1200
-imageShape = (40, 30)
+imageShape = (1, 40, 30)
 batchSize = 256
 gcEnabled = False
 if source == '1':
   trainingDir = 'data/train_normalized'
   testDir = 'data/test_normalized'
   imageSize = 1200
-  imageShape = (40, 30)
+  imageShape = (1, 40, 30)
   batchSize = 256
 elif source == '2':
   trainingDir = 'data/train_normalized_big'
   testDir = 'data/test_normalized_big'
   imageSize = 19200
-  imageShape = (160, 120)
+  imageShape = (1, 160, 120)
   batchSize = 64
 elif source == '3':
   trainingDir = 'data/train_normalized_square_big'
   testDir = 'data/test_normalized_square_big'
   imageSize = 14400
-  imageShape = (120, 120)
+  imageShape = (1, 120, 120)
   batchSize = 8
   gcEnabled = True
 elif source == '4':
   trainingDir = 'data/train_normalized_80_60'
   testDir = 'data/test_normalized_80_60'
   imageSize = 4800
-  imageShape = (80, 60)
+  imageShape = (1, 80, 60)
   batchSize = 128
 elif source == '5':
   trainingDir = 'data/train_normalized_224_224'
   testDir = 'data/test_normalized_224_224'
   imageSize = 50176
-  imageShape = (224, 224)
+  imageShape = (1, 224, 224)
   batchSize = 2
+elif source == '6':
+  trainingDir = 'data/train_normalized_3_224_224'
+  testDir = 'data/test_normalized_3_224_224'
+  imageSize = 150528
+  imageShape = (3, 224, 224)
+  batchSize = 1
 
 trainingLabels = pd.read_csv(trainFile)
 print(trainingLabels.shape)
@@ -70,7 +76,7 @@ for index, row in trainingLabels.iterrows():
   im.close()
 
 xTrain /= 255
-xTrain = xTrain.reshape(xTrain.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
+xTrain = xTrain.reshape(xTrain.shape[0], imageShape[0], imageShape[1], imageShape[2]).astype('float32')
 print(xTrain.shape)
 
 #xTrain /= xTrain.std(axis = None)
@@ -95,7 +101,7 @@ for fName in files:
   index += 1
 
 xTest /= 255
-xTest = xTest.reshape(xTest.shape[0], 1, imageShape[0], imageShape[1]).astype('float32')
+xTest = xTest.reshape(xTest.shape[0], imageShape[0], imageShape[1], imageShape[2]).astype('float32')
 
 def getNet1():
   net = Sequential()
@@ -324,7 +330,7 @@ def getNet6():
 
 def getNet7():
   net = Sequential()
-  net.add(ZeroPadding2D((1,1), input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3]))) #122x122
+  net.add(ZeroPadding2D((1,1), input_shape=(imageShape[0], imageShape[1], imageShape[2]))) #122x122
   net.add(Convolution2D(32, 3, 3, init='glorot_uniform')) #120x120
   net.add(Activation('relu'))
   net.add(ZeroPadding2D((1,1))) #122x122
@@ -405,19 +411,22 @@ def getNet8():
   net.add(ZeroPadding2D((1,1)))
   net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #26x26
   net.add(Activation('relu'))
-  net.add(Convolution2D(128, 6, 6, init='glorot_uniform')) #21x21
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform')) #24x24
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(3,3))) #7x7
+  net.add(MaxPooling2D(pool_size=(2,2))) #12x12
 
   net.add(ZeroPadding2D((1,1)))
-  net.add(Convolution2D(384, 3, 3, init='glorot_uniform'))
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform'))
+  #net.add(Convolution2D(384, 3, 3, init='glorot_uniform'))
   net.add(Activation('relu'))
   net.add(ZeroPadding2D((1,1)))
-  net.add(Convolution2D(384, 3, 3, init='glorot_uniform')) #7x7
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform')) #12x12
+  #net.add(Convolution2D(384, 3, 3, init='glorot_uniform')) #6x6
   net.add(Activation('relu'))
-  net.add(Convolution2D(384, 5, 5, init='glorot_uniform')) #3x3
+  net.add(Convolution2D(256, 4, 4, init='glorot_uniform')) #9x9
+  #net.add(Convolution2D(384, 4, 4, init='glorot_uniform')) #4x4
   net.add(Activation('relu'))
-  net.add(MaxPooling2D(pool_size=(3,3))) #1x1
+  net.add(MaxPooling2D(pool_size=(3,3))) #3x3
 
   net.add(Flatten())
 
@@ -431,13 +440,13 @@ def getNet8():
   net.add(Activation('relu'))
   net.add(Dense(10, activation='softmax'))'''
 
-  net.add(Dense(1152, init='glorot_uniform'))
+  net.add(Dense(768, init='glorot_uniform'))
   net.add(Activation('relu'))
   net.add(Dropout(0.5))
-  net.add(Dense(576, init='glorot_uniform'))
+  net.add(Dense(384, init='glorot_uniform'))
   net.add(Activation('relu'))
   net.add(Dropout(0.5))
-  net.add(Dense(288, init='glorot_uniform'))
+  net.add(Dense(192, init='glorot_uniform'))
   net.add(Activation('relu'))
   net.add(Dense(10, activation='softmax'))
 
@@ -494,7 +503,7 @@ def getNet9():
 def getNet11():
   net = Sequential()
 
-  net.add(ZeroPadding2D((1,1), input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3])))
+  net.add(ZeroPadding2D((1,1), input_shape=(imageShape[0], imageShape[1], imageShape[2])))
   net.add(Convolution2D(64, 3, 3, init='glorot_uniform', activation='relu'))
   net.add(ZeroPadding2D((1,1)))
   net.add(Convolution2D(64, 3, 3, init='glorot_uniform', activation='relu'))
@@ -541,6 +550,60 @@ def getNet11():
   #net.load_weights('data/vgg16_weights.h5')
 
   #net.layers.pop()
+  net.add(Dense(10, activation='softmax'))
+
+  return net
+
+def getNet12():
+  net = Sequential()
+
+  net.add(ZeroPadding2D((1,1), input_shape=(xTrain.shape[1], xTrain.shape[2], xTrain.shape[3])))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(64, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #112x112
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(128, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #56x56
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(256, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #28x28
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #14x14
+
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(ZeroPadding2D((1,1)))
+  net.add(Convolution2D(512, 3, 3, init='glorot_uniform', activation='relu'))
+  net.add(MaxPooling2D(pool_size=(2,2))) #7x7
+
+  net.add(Flatten())
+
+  net.add(Dense(4096, init='glorot_uniform', activation='relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(4096, init='glorot_uniform', activation='relu'))
+  net.add(Dropout(0.5))
+  net.add(Dense(1000, activation='softmax'))
+
+  net.load_weights('data/vgg16_weights.h5')
+
+  net.layers.pop()
   net.add(Dense(10, activation='softmax'))
 
   return net
@@ -616,9 +679,12 @@ def run_cross_validation(nfolds=10):
     elif source == '5':
       net = getNet11()
       numberEpochs = 5
+    elif source == '6':
+      net = getNet12()
+      numberEpochs = 5
 
     #optimizer = SGD(lr=0.0001, momentum=0.95, decay=0.00001, nesterov=True)
-    optimizer = SGD(lr=0.001, momentum=0.9, decay=0.00005, nesterov=True)
+    optimizer = SGD(lr=0.001, momentum=0.95, decay=0.00005, nesterov=True)
     #optimizer = SGD(lr=0.01, momentum=0.9, nesterov=True)
     #optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-10)
 
